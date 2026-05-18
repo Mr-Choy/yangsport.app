@@ -119,3 +119,29 @@ export async function updateRewardActive(rewardId: string, active: boolean): Pro
     .eq('id', rewardId);
   if (error) throw error;
 }
+
+export async function createRewardRow(input: { name: string; name_zh: string; threshold: number; is_active: boolean }): Promise<Reward> {
+  const { data, error } = await client()
+    .from('rewards')
+    .insert({ name: input.name, name_zh: input.name_zh, threshold: input.threshold, is_active: input.is_active })
+    .select('*')
+    .single();
+  if (error) throw error;
+  return rewardFromRow(data as RewardRow);
+}
+
+export async function deleteRewardRow(rewardId: string): Promise<void> {
+  const { error } = await client()
+    .from('rewards')
+    .delete()
+    .eq('id', rewardId);
+  if (error) throw error;
+}
+
+export async function updateRewardRow(rewardId: string, updates: { name: string; name_zh: string; threshold: number; is_active: boolean }): Promise<void> {
+  const { error } = await client()
+    .from('rewards')
+    .update({ name: updates.name, name_zh: updates.name_zh, threshold: updates.threshold, is_active: updates.is_active })
+    .eq('id', rewardId);
+  if (error) throw error;
+}

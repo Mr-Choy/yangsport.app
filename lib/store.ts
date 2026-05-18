@@ -401,14 +401,46 @@ export const useStore = create<StoreState>()(
         const prev = get().rewards;
         if (isDbEnabled) {
           try {
-            // diff active flag and persist any changes
-            const updates: Promise<void>[] = [];
-            for (const r of next) {
-              const before = prev.find((p) => p.id === r.id);
-              if (before && before.active !== r.active) {
-                updates.push(db.updateRewardActive(r.id, r.active));
+            const updates: Promise<any>[] = [];
+
+            // 1. Identify deleted rewards
+            for (const p of prev) {
+              if (!next.some((r) => r.id === p.id)) {
+                updates.push(db.deleteRewardRow(p.id));
               }
             }
+
+            // 2. Identify new or updated rewards
+            for (const r of next) {
+              if (r.id.startsWith('temp-') || r.id.startsWith('new-')) {
+                // Insert new reward
+                updates.push(db.createRewardRow({
+                  name: r.name,
+                  name_zh: r.nameZh,
+                  threshold: r.threshold,
+                  is_active: r.active,
+                }));
+              } else {
+                // Update existing reward if changed
+                const before = prev.find((p) => p.id === r.id);
+                if (before) {
+                  if (
+                    before.active !== r.active ||
+                    before.name !== r.name ||
+                    before.nameZh !== r.nameZh ||
+                    before.threshold !== r.threshold
+                  ) {
+                    updates.push(db.updateRewardRow(r.id, {
+                      name: r.name,
+                      name_zh: r.nameZh,
+                      threshold: r.threshold,
+                      is_active: r.active,
+                    }));
+                  }
+                }
+              }
+            }
+
             await Promise.all(updates);
             const fresh = await db.fetchRewards();
             set({ rewards: fresh });

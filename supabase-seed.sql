@@ -9,7 +9,10 @@ insert into rewards (name, name_zh, threshold, is_active) values
   ('Wristband + Sport towel', '运动手环 + 毛巾',   3,  true),
   ('RM30 store voucher',      'RM30 抵用券',        6,  true),
   ('Young Sport jersey',      'Young Sport 球衣',   10, true)
-on conflict do nothing;
+on conflict (threshold) do update set
+  name = excluded.name,
+  name_zh = excluded.name_zh,
+  is_active = excluded.is_active;
 
 -- Customers (use ON CONFLICT phone — phone is unique)
 insert into customers (phone, name, stamps, total_earned, total_redeemed, last_visit, created_at) values

@@ -39,12 +39,12 @@ create table if not exists rewards (
   id         uuid primary key default uuid_generate_v4(),
   name       text not null,
   name_zh    text,
-  threshold  integer not null,
+  threshold  integer not null unique,
   is_active  boolean default true,
   created_at timestamp default now()
 );
 
--- Add name_zh if the table already existed without it
+-- Add name_zh and unique constraint if the table already existed without them
 do $$
 begin
   if not exists (
@@ -52,6 +52,13 @@ begin
     where table_name = 'rewards' and column_name = 'name_zh'
   ) then
     alter table rewards add column name_zh text;
+  end if;
+
+  if not exists (
+    select 1 from information_schema.table_constraints
+    where table_name = 'rewards' and constraint_type = 'UNIQUE'
+  ) then
+    alter table rewards add constraint rewards_threshold_key unique (threshold);
   end if;
 end $$;
 

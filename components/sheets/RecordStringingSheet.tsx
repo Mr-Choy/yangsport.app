@@ -27,7 +27,8 @@ export function RecordStringingSheet() {
   const [stringModel, setStringModel] = useState('');
   const [tension, setTension] = useState(26);
   const [customTension, setCustomTension] = useState(false);
-  const [serviceDate, setServiceDate] = useState<'today' | 'yesterday'>('today');
+  const [serviceDate, setServiceDate] = useState<'today' | 'yesterday' | 'custom'>('today');
+  const [customDate, setCustomDate] = useState(new Date().toISOString().slice(0, 10));
   const [note, setNote] = useState('');
   const [done, setDone] = useState(false);
 
@@ -36,7 +37,7 @@ export function RecordStringingSheet() {
       setRacketBrand(null); setRacketModel('');
       setStringBrand(null); setStringModel('');
       setTension(26); setCustomTension(false);
-      setServiceDate('today'); setNote(''); setDone(false);
+      setServiceDate('today'); setCustomDate(new Date().toISOString().slice(0, 10)); setNote(''); setDone(false);
     }
   }, [open]);
 
@@ -59,7 +60,9 @@ export function RecordStringingSheet() {
         racketBrand: racketBrand!, racketModel,
         stringBrand: stringBrand!, stringModel,
         tension, note,
-        daysAgo: serviceDate === 'today' ? 0 : 1,
+        daysAgo: serviceDate === 'today' ? 0
+               : serviceDate === 'yesterday' ? 1
+               : Math.max(0, Math.floor((Date.now() - new Date(customDate).getTime()) / 86_400_000)),
       });
       close();
     }, 1100);
@@ -123,11 +126,27 @@ export function RecordStringingSheet() {
                       }}>
                 {t.yesterday}
               </button>
-              <button className="ys-btn ys-btn-sm ys-btn-ghost" style={{ flex: 1, height: 44 }}>
+              <button onClick={() => setServiceDate('custom')}
+                      className="ys-btn ys-btn-sm"
+                      style={{
+                        flex: 1, height: 44,
+                        background: serviceDate === 'custom' ? 'var(--fire)' : 'var(--surface)',
+                        color: serviceDate === 'custom' ? '#fff' : 'var(--ink-2)',
+                        border: serviceDate === 'custom' ? '0' : '1px solid var(--line)',
+                      }}>
                 <Icon.edit width="14" height="14" /> {t.custom}
               </button>
             </div>
           </div>
+
+          {serviceDate === 'custom' && (
+            <div style={{ marginTop: 8 }}>
+              <input type="date" className="ys-input"
+                     value={customDate}
+                     onChange={(e) => setCustomDate(e.target.value)}
+                     style={{ width: '100%' }} />
+            </div>
+          )}
 
           <div style={{ marginBottom: 12 }}>
             <Label>{t.racketBrand}</Label>
